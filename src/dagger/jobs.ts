@@ -33,7 +33,7 @@ export const preview = async (client: Client, src = ".") => {
     )
     .withDirectory("/app", context, { exclude })
     .withWorkdir("/app")
-    .withExec(["npm", "install"])
+    .withExec(["npm", "install"], { skipEntrypoint: true })
     .withExec(["preview", "--non-interactive"]);
 
   const result = await ctr.stdout();
@@ -56,7 +56,7 @@ export const up = async (client: Client, src = ".") => {
     )
     .withDirectory("/app", context, { exclude })
     .withWorkdir("/app")
-    .withExec(["npm", "install"])
+    .withExec(["npm", "install"], { skipEntrypoint: true })
     .withExec(["up", "--yes", "--non-interactive"]);
 
   const result = await ctr.stdout();
