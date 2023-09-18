@@ -33,6 +33,7 @@ dagger run fluentci .
 | Variable            | Description                                                                |
 | ------------------- | -------------------------------------------------------------------------- |
 | PULUMI_ACCESS_TOKEN | The Pulumi access token to use for authenticating with the Pulumi service. |
+| PULUMI_STACK        | The name of the stack to operate on.                                       |
 
 ## Jobs
 

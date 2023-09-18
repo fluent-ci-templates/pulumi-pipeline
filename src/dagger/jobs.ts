@@ -17,6 +17,11 @@ const envs = filterObjectByPrefix(Deno.env.toObject(), [
 ]);
 
 export const preview = async (client: Client, src = ".") => {
+  const PULUMI_STACK = Deno.env.get("PULUMI_STACK");
+  if (!PULUMI_STACK) {
+    throw new Error("PULUMI_STACK env var is required");
+  }
+
   const context = client.host().directory(src);
   const baseCtr = withEnvs(
     client
@@ -34,7 +39,7 @@ export const preview = async (client: Client, src = ".") => {
     .withDirectory("/app", context, { exclude })
     .withWorkdir("/app")
     .withExec(["npm", "install"], { skipEntrypoint: true })
-    .withExec(["preview", "--non-interactive"]);
+    .withExec(["preview", "--non-interactive", "--stack", PULUMI_STACK]);
 
   const result = await ctr.stdout();
 
@@ -42,6 +47,11 @@ export const preview = async (client: Client, src = ".") => {
 };
 
 export const up = async (client: Client, src = ".") => {
+  const PULUMI_STACK = Deno.env.get("PULUMI_STACK");
+  if (!PULUMI_STACK) {
+    throw new Error("PULUMI_STACK env var is required");
+  }
+
   const context = client.host().directory(src);
   const baseCtr = withEnvs(
     client.pipeline(Job.up).container().from(`pulumi/pulumi:${PULUMI_VERSION}`),
@@ -57,7 +67,7 @@ export const up = async (client: Client, src = ".") => {
     .withDirectory("/app", context, { exclude })
     .withWorkdir("/app")
     .withExec(["npm", "install"], { skipEntrypoint: true })
-    .withExec(["up", "--yes", "--non-interactive"]);
+    .withExec(["up", "--yes", "--non-interactive", "--stack", PULUMI_STACK]);
 
   const result = await ctr.stdout();
 

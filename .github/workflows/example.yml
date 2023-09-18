@@ -30,3 +30,4 @@ jobs:
         env:
           GOOGLE_APPLICATION_CREDENTIALS: ./fluentci-086b644d4c53.json
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+          PULUMI_STACK: dev
