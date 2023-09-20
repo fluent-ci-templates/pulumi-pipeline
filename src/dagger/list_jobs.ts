@@ -1,6 +1,6 @@
-import { brightGreen } from "https://deno.land/std@0.191.0/fmt/colors.ts";
+import { brightGreen } from "../../deps.ts";
 import { runnableJobs, jobDescriptions, Job } from "./jobs.ts";
-import { stringifyTree } from "https://esm.sh/stringify-tree@1.1.1";
+import { stringifyTree } from "../../deps.ts";
 
 const tree = {
   name: brightGreen("pulumi_pipeline"),
