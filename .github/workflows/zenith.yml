@@ -16,7 +16,7 @@ jobs:
           curl -L https://dl.dagger.io/dagger/install.sh | DAGGER_VERSION=0.8.8 sh
           sudo mv bin/dagger /usr/local/bin
           dagger version
-      - name: Setup Shuttle API Key
+      - name: Setup Pulumi Access Token
         run: |
           sed -i "s/PULUMI_ACCESS_TOKEN/$PULUMI_ACCESS_TOKEN/g" example/preview.gql
           sed -i "s/PULUMI_ACCESS_TOKEN/$PULUMI_ACCESS_TOKEN/g" example/up.gql
