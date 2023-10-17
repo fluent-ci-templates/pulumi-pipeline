@@ -17,18 +17,30 @@ const Query = queryType({
         src: nonNull(stringArg()),
         stack: nonNull(stringArg()),
         token: nonNull(stringArg()),
+        googleApplicationCredentials: stringArg(),
       },
       resolve: async (_root, args, _ctx) =>
-        await preview(args.src, args.stack, args.token),
+        await preview(
+          args.src,
+          args.stack,
+          args.token,
+          args.googleApplicationCredentials
+        ),
     });
     t.string("up", {
       args: {
         src: nonNull(stringArg()),
         stack: nonNull(stringArg()),
         token: nonNull(stringArg()),
+        googleApplicationCredentials: stringArg(),
       },
       resolve: async (_root, args, _ctx) =>
-        await up(args.src, args.stack, args.token),
+        await up(
+          args.src,
+          args.stack,
+          args.token,
+          args.googleApplicationCredentials
+        ),
     });
   },
 });

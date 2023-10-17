@@ -16,7 +16,15 @@ const envs = filterObjectByPrefix(Deno.env.toObject(), [
   "AWS_",
 ]);
 
-export const preview = async (src = ".", stack?: string, token?: string) => {
+export const preview = async (
+  src = ".",
+  stack?: string,
+  token?: string,
+  googleApplicationCredentials?: string
+) => {
+  const GOOGLE_APPLICATION_CREDENTIALS =
+    Deno.env.get("GOOGLE_APPLICATION_CREDENTIALS") ||
+    googleApplicationCredentials;
   const PULUMI_STACK = Deno.env.get("PULUMI_STACK") || stack;
   const PULUMI_ACCESS_TOKEN = Deno.env.get("PULUMI_ACCESS_TOKEN") || token;
   if (!PULUMI_STACK) {
@@ -33,7 +41,11 @@ export const preview = async (src = ".", stack?: string, token?: string) => {
       envs
     );
     const ctr = baseCtr
-      .withEnvVariable("PULUMI_ACCESS_TOKEN", PULUMI_ACCESS_TOKEN)
+      .withEnvVariable("PULUMI_ACCESS_TOKEN", PULUMI_ACCESS_TOKEN || "")
+      .withEnvVariable(
+        "GOOGLE_APPLICATION_CREDENTIALS",
+        GOOGLE_APPLICATION_CREDENTIALS || ""
+      )
       .withMountedCache("/root/.pulumi", client.cacheVolume("pulumi-cache"))
       .withMountedCache(
         "/app/node_modules",
@@ -51,7 +63,15 @@ export const preview = async (src = ".", stack?: string, token?: string) => {
   return "Done";
 };
 
-export const up = async (src = ".", stack?: string, token?: string) => {
+export const up = async (
+  src = ".",
+  stack?: string,
+  token?: string,
+  googleApplicationCredentials?: string
+) => {
+  const GOOGLE_APPLICATION_CREDENTIALS =
+    Deno.env.get("GOOGLE_APPLICATION_CREDENTIALS") ||
+    googleApplicationCredentials;
   const PULUMI_STACK = Deno.env.get("PULUMI_STACK") || stack;
   const PULUMI_ACCESS_TOKEN = Deno.env.get("PULUMI_ACCESS_TOKEN") || token;
   if (!PULUMI_STACK) {
@@ -69,7 +89,11 @@ export const up = async (src = ".", stack?: string, token?: string) => {
     );
 
     const ctr = baseCtr
-      .withEnvVariable("PULUMI_ACCESS_TOKEN", PULUMI_ACCESS_TOKEN)
+      .withEnvVariable("PULUMI_ACCESS_TOKEN", PULUMI_ACCESS_TOKEN || "")
+      .withEnvVariable(
+        "GOOGLE_APPLICATION_CREDENTIALS",
+        GOOGLE_APPLICATION_CREDENTIALS || ""
+      )
       .withMountedCache("/root/.pulumi", client.cacheVolume("pulumi-cache"))
       .withMountedCache(
         "/app/node_modules",

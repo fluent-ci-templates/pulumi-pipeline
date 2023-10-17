@@ -23,7 +23,10 @@ jobs:
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
       - name: Setup Service Account
-        run: echo $GCP_SERVICE_ACCOUNT > fluentci-086b644d4c53.json
+        run: |
+          echo $GCP_SERVICE_ACCOUNT > fluentci-086b644d4c53.json
+          sed -i "s/GCP_SERVICE_ACCOUNT/$GCP_SERVICE_ACCOUNT/g" preview.gql
+          sed -i "s/GCP_SERVICE_ACCOUNT/$GCP_SERVICE_ACCOUNT/g" up.gql
         env:
           GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
         working-directory: example

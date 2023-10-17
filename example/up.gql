@@ -1,5 +1,10 @@
 {
   pulumi {
-    up(src: ".", stack: "dev", token: "PULUMI_ACCESS_TOKEN")
+    up(
+      src: "."
+      stack: "dev"
+      token: "PULUMI_ACCESS_TOKEN"
+      googleApplicationCredentials: "GCP_SERVICE_ACCOUNT"
+    )
   }
 }

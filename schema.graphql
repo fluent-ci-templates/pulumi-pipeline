@@ -3,6 +3,6 @@
 
 
 type Query {
-  preview(src: String!, stack: String!, token: String!): String
-  up(src: String!, stack: String!, token: String!): String
+  preview(googleApplicationCredentials: String, src: String!, stack: String!, token: String!): String
+  up(googleApplicationCredentials: String, src: String!, stack: String!, token: String!): String
 }

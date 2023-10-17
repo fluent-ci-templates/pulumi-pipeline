@@ -1,4 +1,5 @@
 export { assertEquals } from "https://deno.land/std@0.191.0/testing/asserts.ts";
+export { Container } from "https://sdk.fluentci.io/z1/mod.ts";
 import Client from "https://sdk.fluentci.io/z1/mod.ts";
 export default Client;
 

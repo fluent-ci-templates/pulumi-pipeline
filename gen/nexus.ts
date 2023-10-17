@@ -58,11 +58,13 @@ export interface NexusGenFieldTypeNames {
 export interface NexusGenArgTypes {
   Query: {
     preview: { // args
+      googleApplicationCredentials?: string | null; // String
       src: string; // String!
       stack: string; // String!
       token: string; // String!
     }
     up: { // args
+      googleApplicationCredentials?: string | null; // String
       src: string; // String!
       stack: string; // String!
       token: string; // String!
