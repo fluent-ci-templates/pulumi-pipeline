@@ -18,12 +18,9 @@ const envs = filterObjectByPrefix(Deno.env.toObject(), [
 
 export const preview = async (src = ".", stack?: string, token?: string) => {
   const PULUMI_STACK = Deno.env.get("PULUMI_STACK") || stack;
+  const PULUMI_ACCESS_TOKEN = Deno.env.get("PULUMI_ACCESS_TOKEN") || token;
   if (!PULUMI_STACK) {
     throw new Error("PULUMI_STACK env var is required");
-  }
-
-  if (token) {
-    Deno.env.set("PULUMI_ACCESS_TOKEN", token);
   }
 
   await connect(async (client: Client) => {
@@ -36,6 +33,7 @@ export const preview = async (src = ".", stack?: string, token?: string) => {
       envs
     );
     const ctr = baseCtr
+      .withEnvVariable("PULUMI_ACCESS_TOKEN", PULUMI_ACCESS_TOKEN)
       .withMountedCache("/root/.pulumi", client.cacheVolume("pulumi-cache"))
       .withMountedCache(
         "/app/node_modules",
@@ -55,12 +53,9 @@ export const preview = async (src = ".", stack?: string, token?: string) => {
 
 export const up = async (src = ".", stack?: string, token?: string) => {
   const PULUMI_STACK = Deno.env.get("PULUMI_STACK") || stack;
+  const PULUMI_ACCESS_TOKEN = Deno.env.get("PULUMI_ACCESS_TOKEN") || token;
   if (!PULUMI_STACK) {
     throw new Error("PULUMI_STACK env var is required");
-  }
-
-  if (token) {
-    Deno.env.set("PULUMI_ACCESS_TOKEN", token);
   }
 
   await connect(async (client: Client) => {
@@ -74,6 +69,7 @@ export const up = async (src = ".", stack?: string, token?: string) => {
     );
 
     const ctr = baseCtr
+      .withEnvVariable("PULUMI_ACCESS_TOKEN", PULUMI_ACCESS_TOKEN)
       .withMountedCache("/root/.pulumi", client.cacheVolume("pulumi-cache"))
       .withMountedCache(
         "/app/node_modules",
