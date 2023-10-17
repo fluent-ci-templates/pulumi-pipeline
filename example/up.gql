@@ -1,0 +1,5 @@
+{
+  pulumi {
+    up(src: ".", stack: "dev", token: "PULUMI_ACCESS_TOKEN")
+  }
+}

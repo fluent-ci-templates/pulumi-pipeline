@@ -1,4 +1,4 @@
-import Client from "../../deps.ts";
+import Client, { connect } from "../../deps.ts";
 import { filterObjectByPrefix, withEnvs } from "./lib.ts";
 
 export enum Job {
@@ -16,76 +16,95 @@ const envs = filterObjectByPrefix(Deno.env.toObject(), [
   "AWS_",
 ]);
 
-export const preview = async (client: Client, src = ".") => {
-  const PULUMI_STACK = Deno.env.get("PULUMI_STACK");
+export const preview = async (src = ".", stack?: string, token?: string) => {
+  const PULUMI_STACK = Deno.env.get("PULUMI_STACK") || stack;
   if (!PULUMI_STACK) {
     throw new Error("PULUMI_STACK env var is required");
   }
 
-  const context = client.host().directory(src);
-  const baseCtr = withEnvs(
-    client
-      .pipeline(Job.preview)
-      .container()
-      .from(`pulumi/pulumi:${PULUMI_VERSION}`),
-    envs
-  );
-  const ctr = baseCtr
-    .withMountedCache("/root/.pulumi", client.cacheVolume("pulumi-cache"))
-    .withMountedCache(
-      "/app/node_modules",
-      client.cacheVolume("pulumi-node-modules")
-    )
-    .withDirectory("/app", context, { exclude })
-    .withWorkdir("/app")
-    .withExec(["npm", "install"], { skipEntrypoint: true })
-    .withExec(["preview", "--non-interactive", "--stack", PULUMI_STACK]);
+  if (token) {
+    Deno.env.set("PULUMI_ACCESS_TOKEN", token);
+  }
 
-  const result = await ctr.stdout();
+  await connect(async (client: Client) => {
+    const context = client.host().directory(src);
+    const baseCtr = withEnvs(
+      client
+        .pipeline(Job.preview)
+        .container()
+        .from(`pulumi/pulumi:${PULUMI_VERSION}`),
+      envs
+    );
+    const ctr = baseCtr
+      .withMountedCache("/root/.pulumi", client.cacheVolume("pulumi-cache"))
+      .withMountedCache(
+        "/app/node_modules",
+        client.cacheVolume("pulumi-node-modules")
+      )
+      .withDirectory("/app", context, { exclude })
+      .withWorkdir("/app")
+      .withExec(["npm", "install"], { skipEntrypoint: true })
+      .withExec(["preview", "--non-interactive", "--stack", PULUMI_STACK]);
 
-  console.log(result);
+    const result = await ctr.stdout();
+
+    console.log(result);
+  });
+  return "Done";
 };
 
-export const up = async (client: Client, src = ".") => {
-  const PULUMI_STACK = Deno.env.get("PULUMI_STACK");
+export const up = async (src = ".", stack?: string, token?: string) => {
+  const PULUMI_STACK = Deno.env.get("PULUMI_STACK") || stack;
   if (!PULUMI_STACK) {
     throw new Error("PULUMI_STACK env var is required");
   }
 
-  const context = client.host().directory(src);
-  const baseCtr = withEnvs(
-    client.pipeline(Job.up).container().from(`pulumi/pulumi:${PULUMI_VERSION}`),
-    envs
-  );
+  if (token) {
+    Deno.env.set("PULUMI_ACCESS_TOKEN", token);
+  }
 
-  const ctr = baseCtr
-    .withMountedCache("/root/.pulumi", client.cacheVolume("pulumi-cache"))
-    .withMountedCache(
-      "/app/node_modules",
-      client.cacheVolume("pulumi-node-modules")
-    )
-    .withDirectory("/app", context, { exclude })
-    .withWorkdir("/app")
-    .withExec(["npm", "install"], { skipEntrypoint: true })
-    .withExec(["up", "--yes", "--non-interactive", "--stack", PULUMI_STACK]);
+  await connect(async (client: Client) => {
+    const context = client.host().directory(src);
+    const baseCtr = withEnvs(
+      client
+        .pipeline(Job.up)
+        .container()
+        .from(`pulumi/pulumi:${PULUMI_VERSION}`),
+      envs
+    );
 
-  const result = await ctr.stdout();
+    const ctr = baseCtr
+      .withMountedCache("/root/.pulumi", client.cacheVolume("pulumi-cache"))
+      .withMountedCache(
+        "/app/node_modules",
+        client.cacheVolume("pulumi-node-modules")
+      )
+      .withDirectory("/app", context, { exclude })
+      .withWorkdir("/app")
+      .withExec(["npm", "install"], { skipEntrypoint: true })
+      .withExec(["up", "--yes", "--non-interactive", "--stack", PULUMI_STACK]);
 
-  console.log(result);
+    const result = await ctr.stdout();
+
+    console.log(result);
+  });
+  return "Done";
 };
 
 export type JobExec = (
-  client: Client,
-  src?: string
+  src?: string,
+  stack?: string,
+  token?: string
 ) =>
-  | Promise<void>
+  | Promise<string>
   | ((
-      client: Client,
       src?: string,
+      stack?: string,
+      token?: string,
       options?: {
         ignore: string[];
       }
-    ) => Promise<void>);
+    ) => Promise<string>);
 
 export const runnableJobs: Record<Job, JobExec> = {
   [Job.preview]: preview,

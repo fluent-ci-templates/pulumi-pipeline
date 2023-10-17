@@ -1,0 +1,5 @@
+{
+  "root": "",
+  "name": "pulumi",
+  "sdkRuntime": "tsiry/dagger-sdk-deno"
+}
