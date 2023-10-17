@@ -4,7 +4,7 @@
       src: "."
       stack: "dev"
       token: "PULUMI_ACCESS_TOKEN"
-      googleApplicationCredentials: "GOOGLE_APPLICATION_CREDENTIALS"
+      googleApplicationCredentials: "./fluentci-086b644d4c53.json"
     )
   }
 }
