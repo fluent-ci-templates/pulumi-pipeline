@@ -4,7 +4,7 @@
       src: "."
       stack: "dev"
       token: "PULUMI_ACCESS_TOKEN"
-      googleApplicationCredentials: "GCP_SERVICE_ACCOUNT"
+      googleApplicationCredentials: "GOOGLE_APPLICATION_CREDENTIALS"
     )
   }
 }
