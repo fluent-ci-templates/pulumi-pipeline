@@ -1,4 +1,4 @@
-import Client from "@fluentci.io/dagger";
+import Client, { connect } from "../../deps.ts";
 import { filterObjectByPrefix, withEnvs } from "./lib.ts";
 
 export enum Job {
@@ -16,76 +16,115 @@ const envs = filterObjectByPrefix(Deno.env.toObject(), [
   "AWS_",
 ]);
 
-export const preview = async (client: Client, src = ".") => {
-  const PULUMI_STACK = Deno.env.get("PULUMI_STACK");
+export const preview = async (
+  src = ".",
+  stack?: string,
+  token?: string,
+  googleApplicationCredentials?: string
+) => {
+  const GOOGLE_APPLICATION_CREDENTIALS =
+    Deno.env.get("GOOGLE_APPLICATION_CREDENTIALS") ||
+    googleApplicationCredentials;
+  const PULUMI_STACK = Deno.env.get("PULUMI_STACK") || stack;
+  const PULUMI_ACCESS_TOKEN = Deno.env.get("PULUMI_ACCESS_TOKEN") || token;
   if (!PULUMI_STACK) {
     throw new Error("PULUMI_STACK env var is required");
   }
 
-  const context = client.host().directory(src);
-  const baseCtr = withEnvs(
-    client
-      .pipeline(Job.preview)
-      .container()
-      .from(`pulumi/pulumi:${PULUMI_VERSION}`),
-    envs
-  );
-  const ctr = baseCtr
-    .withMountedCache("/root/.pulumi", client.cacheVolume("pulumi-cache"))
-    .withMountedCache(
-      "/app/node_modules",
-      client.cacheVolume("pulumi-node-modules")
-    )
-    .withDirectory("/app", context, { exclude })
-    .withWorkdir("/app")
-    .withExec(["npm", "install"], { skipEntrypoint: true })
-    .withExec(["preview", "--non-interactive", "--stack", PULUMI_STACK]);
+  await connect(async (client: Client) => {
+    const context = client.host().directory(src);
+    const baseCtr = withEnvs(
+      client
+        .pipeline(Job.preview)
+        .container()
+        .from(`pulumi/pulumi:${PULUMI_VERSION}`),
+      envs
+    );
+    const ctr = baseCtr
+      .withEnvVariable("PULUMI_ACCESS_TOKEN", PULUMI_ACCESS_TOKEN || "")
+      .withEnvVariable(
+        "GOOGLE_APPLICATION_CREDENTIALS",
+        GOOGLE_APPLICATION_CREDENTIALS || ""
+      )
+      .withMountedCache("/root/.pulumi", client.cacheVolume("pulumi-cache"))
+      .withMountedCache(
+        "/app/node_modules",
+        client.cacheVolume("pulumi-node-modules")
+      )
+      .withDirectory("/app", context, { exclude })
+      .withWorkdir("/app")
+      .withExec(["npm", "install"], { skipEntrypoint: true })
+      .withExec(["preview", "--non-interactive", "--stack", PULUMI_STACK]);
 
-  const result = await ctr.stdout();
+    const result = await ctr.stdout();
 
-  console.log(result);
+    console.log(result);
+  });
+  return "Done";
 };
 
-export const up = async (client: Client, src = ".") => {
-  const PULUMI_STACK = Deno.env.get("PULUMI_STACK");
+export const up = async (
+  src = ".",
+  stack?: string,
+  token?: string,
+  googleApplicationCredentials?: string
+) => {
+  const GOOGLE_APPLICATION_CREDENTIALS =
+    Deno.env.get("GOOGLE_APPLICATION_CREDENTIALS") ||
+    googleApplicationCredentials;
+  const PULUMI_STACK = Deno.env.get("PULUMI_STACK") || stack;
+  const PULUMI_ACCESS_TOKEN = Deno.env.get("PULUMI_ACCESS_TOKEN") || token;
   if (!PULUMI_STACK) {
     throw new Error("PULUMI_STACK env var is required");
   }
 
-  const context = client.host().directory(src);
-  const baseCtr = withEnvs(
-    client.pipeline(Job.up).container().from(`pulumi/pulumi:${PULUMI_VERSION}`),
-    envs
-  );
+  await connect(async (client: Client) => {
+    const context = client.host().directory(src);
+    const baseCtr = withEnvs(
+      client
+        .pipeline(Job.up)
+        .container()
+        .from(`pulumi/pulumi:${PULUMI_VERSION}`),
+      envs
+    );
 
-  const ctr = baseCtr
-    .withMountedCache("/root/.pulumi", client.cacheVolume("pulumi-cache"))
-    .withMountedCache(
-      "/app/node_modules",
-      client.cacheVolume("pulumi-node-modules")
-    )
-    .withDirectory("/app", context, { exclude })
-    .withWorkdir("/app")
-    .withExec(["npm", "install"], { skipEntrypoint: true })
-    .withExec(["up", "--yes", "--non-interactive", "--stack", PULUMI_STACK]);
+    const ctr = baseCtr
+      .withEnvVariable("PULUMI_ACCESS_TOKEN", PULUMI_ACCESS_TOKEN || "")
+      .withEnvVariable(
+        "GOOGLE_APPLICATION_CREDENTIALS",
+        GOOGLE_APPLICATION_CREDENTIALS || ""
+      )
+      .withMountedCache("/root/.pulumi", client.cacheVolume("pulumi-cache"))
+      .withMountedCache(
+        "/app/node_modules",
+        client.cacheVolume("pulumi-node-modules")
+      )
+      .withDirectory("/app", context, { exclude })
+      .withWorkdir("/app")
+      .withExec(["npm", "install"], { skipEntrypoint: true })
+      .withExec(["up", "--yes", "--non-interactive", "--stack", PULUMI_STACK]);
 
-  const result = await ctr.stdout();
+    const result = await ctr.stdout();
 
-  console.log(result);
+    console.log(result);
+  });
+  return "Done";
 };
 
 export type JobExec = (
-  client: Client,
-  src?: string
+  src?: string,
+  stack?: string,
+  token?: string
 ) =>
-  | Promise<void>
+  | Promise<string>
   | ((
-      client: Client,
       src?: string,
+      stack?: string,
+      token?: string,
       options?: {
         ignore: string[];
       }
-    ) => Promise<void>);
+    ) => Promise<string>);
 
 export const runnableJobs: Record<Job, JobExec> = {
   [Job.preview]: preview,

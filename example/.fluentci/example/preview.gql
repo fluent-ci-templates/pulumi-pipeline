@@ -1,0 +1,5 @@
+{
+  pulumi {
+    preview(src: ".", stack: "dev", token: "PULUMI_ACCESS_TOKEN")
+  }
+}

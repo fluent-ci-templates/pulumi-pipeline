@@ -25,7 +25,7 @@ This will create a `.fluentci` folder in your project.
 Now you can run the pipeline with:
 
 ```bash
-dagger run fluentci .
+fluentci run .
 ```
 
 ## Environment variables
@@ -34,6 +34,7 @@ dagger run fluentci .
 | ------------------- | -------------------------------------------------------------------------- |
 | PULUMI_ACCESS_TOKEN | The Pulumi access token to use for authenticating with the Pulumi service. |
 | PULUMI_STACK        | The name of the stack to operate on.                                       |
+| PULUMI_VERSION      | The version of the Pulumi CLI to use. Defaults to `latest`.                |
 
 ## Jobs
 
@@ -47,15 +48,8 @@ dagger run fluentci .
 You can also use this pipeline programmatically:
 
 ```ts
-import Client, { connect } from "https://sdk.fluentci.io/v0.1.7/mod.ts";
-import { preview, up } from "https://pkg.fluentci.io/pulumi_pipeline@v0.1.0/mod.ts";
+import { preview, up } from "https://pkg.fluentci.io/pulumi_pipeline@v0.2.0/mod.ts";
 
-function pipeline(src = ".") {
-  connect(async (client: Client) => {
-    await preview(client, src);
-    // await up(client, src);
-  });
-}
-
-pipeline();
+await preview();
+// await up();
 ```
