@@ -43,6 +43,22 @@ fluentci run .
 | preview | Show a preview of updates to a stack's resources |
 | up      | Create or update the resources in a stack        |
 
+```graphql
+preview(
+  googleApplicationCredentials: String, 
+  src: String!, 
+  stack: String!, 
+  token: String!
+): String
+
+up(
+  googleApplicationCredentials: String, 
+  src: String!, 
+  stack: String!, 
+  token: String!
+): String
+
+```
 ## Programmatic usage
 
 You can also use this pipeline programmatically:
