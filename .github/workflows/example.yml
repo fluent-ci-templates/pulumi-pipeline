@@ -26,9 +26,7 @@ jobs:
           GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
         working-directory: example
       - name: Run Dagger Pipelines
-        run: |
-          rm ../deno.lock
-          dagger run deno run -A ../src/dagger/runner.ts preview up
+        run: dagger run deno run -A ../src/dagger/runner.ts preview
         working-directory: example
         env:
           GOOGLE_APPLICATION_CREDENTIALS: ./fluentci-086b644d4c53.json
