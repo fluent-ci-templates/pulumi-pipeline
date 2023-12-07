@@ -4,7 +4,7 @@ name: Zenith Example
 on:
   push:
     branches:
-      - zenith
+      - main
 
 jobs:
   tests:
