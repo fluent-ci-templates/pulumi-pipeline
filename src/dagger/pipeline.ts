@@ -12,7 +12,11 @@ export default async function pipeline(src = ".", args: string[] = []) {
     return;
   }
 
-  await preview();
+  await preview(
+    src,
+    Deno.env.get("PULUMI_STACK") || "dev",
+    Deno.env.get("PULUMI_ACCESS_TOKEN") || ""
+  );
 }
 
 async function runSpecificJobs(args: jobs.Job[]) {
@@ -21,6 +25,10 @@ async function runSpecificJobs(args: jobs.Job[]) {
     if (!job) {
       throw new Error(`Job ${name} not found`);
     }
-    await job();
+    await job(
+      ".",
+      Deno.env.get("PULUMI_STACK") || "dev",
+      Deno.env.get("PULUMI_ACCESS_TOKEN") || ""
+    );
   }
 }

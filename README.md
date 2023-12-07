@@ -28,6 +28,15 @@ Now you can run the pipeline with:
 fluentci run .
 ```
 
+
+## Dagger Module
+
+Use as a [Dagger](https://dagger.io) module:
+
+```bash
+dagger mod install github.com/fluent-ci-templates/pulumi-pipeline@mod
+```
+
 ## Environment variables
 
 | Variable            | Description                                                                |
@@ -43,29 +52,43 @@ fluentci run .
 | preview | Show a preview of updates to a stack's resources |
 | up      | Create or update the resources in a stack        |
 
-```graphql
+```typescript
 preview(
-  googleApplicationCredentials: String, 
-  src: String!, 
-  stack: String!, 
-  token: String!
-): String
+  src: Directory | string,
+  stack: string,
+  token: Secret | string,
+  pulumiVersion = "latest",
+  googleApplicationCredentials?: string
+): Promise<string>
 
 up(
-  googleApplicationCredentials: String, 
-  src: String!, 
-  stack: String!, 
-  token: String!
-): String
+  src: Directory | string,
+  stack: string,
+  token: Secret | string,
+  pulumiVersion = "latest",
+  googleApplicationCredentials?: string
+): Promise<string>
 
 ```
+
 ## Programmatic usage
 
 You can also use this pipeline programmatically:
 
 ```ts
-import { preview, up } from "https://pkg.fluentci.io/pulumi_pipeline@v0.2.0/mod.ts";
+import { preview, up } from "https://pkg.fluentci.io/pulumi_pipeline@v0.3.0/mod.ts";
 
-await preview();
-// await up();
+await preview(
+  ".", 
+  Deno.env.get("PULUMI_STACK") || "dev",
+  Deno.env.get("PULUMI_ACCESS_TOKEN")!
+);
+
+/* 
+await up(
+  ".", 
+  Deno.env.get("PULUMI_STACK") || "dev",
+  Deno.env.get("PULUMI_ACCESS_TOKEN")!
+);
+*/
 ```

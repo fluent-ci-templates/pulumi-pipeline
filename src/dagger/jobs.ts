@@ -1,5 +1,12 @@
-import Client, { connect } from "../../deps.ts";
-import { filterObjectByPrefix, withEnvs } from "./lib.ts";
+import { Directory, Secret } from "../../deps.ts";
+import { Client } from "../../sdk/client.gen.ts";
+import { connect } from "../../sdk/connect.ts";
+import {
+  filterObjectByPrefix,
+  withEnvs,
+  getDirectory,
+  getPulumiAccessToken,
+} from "./lib.ts";
 
 export enum Job {
   preview = "preview",
@@ -8,31 +15,46 @@ export enum Job {
 
 export const exclude = [".git", ".fluentci", "node_modules"];
 
-const PULUMI_VERSION = Deno.env.get("PULUMI_VERSION") || "latest";
-
 const envs = filterObjectByPrefix(Deno.env.toObject(), [
   "PULUMI_",
   "GOOGLE_",
   "AWS_",
 ]);
 
-export const preview = async (
-  src = ".",
-  stack?: string,
-  token?: string,
+/**
+ * @function
+ * @description Show a preview of updates to a stack's resources
+ * @param {string | Directory} src
+ * @param {string} stack
+ * @param {string | Secret} token
+ * @param {string} pulumiVersion
+ * @param {string} googleApplicationCredentials
+ * @returns {Promise<string>}
+ */
+export async function preview(
+  src: Directory | string,
+  stack: string,
+  token: Secret | string,
+  pulumiVersion = "latest",
   googleApplicationCredentials?: string
-) => {
+): Promise<string> {
+  let result = "";
   const GOOGLE_APPLICATION_CREDENTIALS =
     Deno.env.get("GOOGLE_APPLICATION_CREDENTIALS") ||
     googleApplicationCredentials;
   const PULUMI_STACK = Deno.env.get("PULUMI_STACK") || stack;
-  const PULUMI_ACCESS_TOKEN = Deno.env.get("PULUMI_ACCESS_TOKEN") || token;
-  if (!PULUMI_STACK) {
-    throw new Error("PULUMI_STACK env var is required");
-  }
+
+  const PULUMI_VERSION = Deno.env.get("PULUMI_VERSION") || pulumiVersion;
 
   await connect(async (client: Client) => {
-    const context = client.host().directory(src);
+    const context = getDirectory(client, src);
+    const secret = getPulumiAccessToken(client, token);
+
+    if (!secret) {
+      console.error("PULUMI_ACCESS_TOKEN env var is required");
+      Deno.exit(1);
+    }
+
     const baseCtr = withEnvs(
       client
         .pipeline(Job.preview)
@@ -41,7 +63,7 @@ export const preview = async (
       envs
     );
     const ctr = baseCtr
-      .withEnvVariable("PULUMI_ACCESS_TOKEN", PULUMI_ACCESS_TOKEN || "")
+      .withSecretVariable("PULUMI_ACCESS_TOKEN", secret)
       .withEnvVariable(
         "GOOGLE_APPLICATION_CREDENTIALS",
         GOOGLE_APPLICATION_CREDENTIALS || ""
@@ -56,30 +78,38 @@ export const preview = async (
       .withExec(["npm", "install"], { skipEntrypoint: true })
       .withExec(["preview", "--non-interactive", "--stack", PULUMI_STACK]);
 
-    const result = await ctr.stdout();
-
-    console.log(result);
+    result = await ctr.stdout();
   });
-  return "Done";
-};
+  return result;
+}
 
-export const up = async (
-  src = ".",
-  stack?: string,
-  token?: string,
+/**
+ * @function
+ * @description Create or update the resources in a stack
+ * @param {string | Directory} src
+ * @param {string} stack
+ * @param {string | Secret} token
+ * @param {string} pulumiVersion
+ * @param {string} googleApplicationCredentials
+ * @returns {Promise<string>}
+ */
+export async function up(
+  src: Directory | string,
+  stack: string,
+  token: Secret | string,
+  pulumiVersion = "latest",
   googleApplicationCredentials?: string
-) => {
+): Promise<string> {
+  let result = "";
   const GOOGLE_APPLICATION_CREDENTIALS =
     Deno.env.get("GOOGLE_APPLICATION_CREDENTIALS") ||
     googleApplicationCredentials;
   const PULUMI_STACK = Deno.env.get("PULUMI_STACK") || stack;
-  const PULUMI_ACCESS_TOKEN = Deno.env.get("PULUMI_ACCESS_TOKEN") || token;
-  if (!PULUMI_STACK) {
-    throw new Error("PULUMI_STACK env var is required");
-  }
+  const PULUMI_VERSION = Deno.env.get("PULUMI_VERSION") || pulumiVersion;
 
   await connect(async (client: Client) => {
-    const context = client.host().directory(src);
+    const context = getDirectory(client, src);
+    const secret = getPulumiAccessToken(client, token);
     const baseCtr = withEnvs(
       client
         .pipeline(Job.up)
@@ -88,8 +118,13 @@ export const up = async (
       envs
     );
 
+    if (!secret) {
+      console.error("PULUMI_ACCESS_TOKEN env var is required");
+      Deno.exit(1);
+    }
+
     const ctr = baseCtr
-      .withEnvVariable("PULUMI_ACCESS_TOKEN", PULUMI_ACCESS_TOKEN || "")
+      .withSecretVariable("PULUMI_ACCESS_TOKEN", secret)
       .withEnvVariable(
         "GOOGLE_APPLICATION_CREDENTIALS",
         GOOGLE_APPLICATION_CREDENTIALS || ""
@@ -104,27 +139,18 @@ export const up = async (
       .withExec(["npm", "install"], { skipEntrypoint: true })
       .withExec(["up", "--yes", "--non-interactive", "--stack", PULUMI_STACK]);
 
-    const result = await ctr.stdout();
-
-    console.log(result);
+    result = await ctr.stdout();
   });
-  return "Done";
-};
+  return result;
+}
 
 export type JobExec = (
-  src?: string,
-  stack?: string,
-  token?: string
-) =>
-  | Promise<string>
-  | ((
-      src?: string,
-      stack?: string,
-      token?: string,
-      options?: {
-        ignore: string[];
-      }
-    ) => Promise<string>);
+  src: Directory | string,
+  stack: string,
+  token: Secret | string,
+  pulumiVersion?: string,
+  googleApplicationCredentials?: string
+) => Promise<string>;
 
 export const runnableJobs: Record<Job, JobExec> = {
   [Job.preview]: preview,
