@@ -1,6 +1,4 @@
-import { Directory, Secret } from "../../deps.ts";
-import { Client } from "../../sdk/client.gen.ts";
-import { connect } from "../../sdk/connect.ts";
+import { Directory, Secret, dag } from "../../deps.ts";
 import {
   filterObjectByPrefix,
   withEnvs,
@@ -38,7 +36,6 @@ export async function preview(
   pulumiVersion = "latest",
   googleApplicationCredentials?: string
 ): Promise<string> {
-  let result = "";
   const GOOGLE_APPLICATION_CREDENTIALS =
     Deno.env.get("GOOGLE_APPLICATION_CREDENTIALS") ||
     googleApplicationCredentials;
@@ -46,40 +43,38 @@ export async function preview(
 
   const PULUMI_VERSION = Deno.env.get("PULUMI_VERSION") || pulumiVersion;
 
-  await connect(async (client: Client) => {
-    const context = getDirectory(client, src);
-    const secret = getPulumiAccessToken(client, token);
+  const context = await getDirectory(dag, src);
+  const secret = await getPulumiAccessToken(dag, token);
 
-    if (!secret) {
-      console.error("PULUMI_ACCESS_TOKEN env var is required");
-      Deno.exit(1);
-    }
+  if (!secret) {
+    console.error("PULUMI_ACCESS_TOKEN env var is required");
+    Deno.exit(1);
+  }
 
-    const baseCtr = withEnvs(
-      client
-        .pipeline(Job.preview)
-        .container()
-        .from(`pulumi/pulumi:${PULUMI_VERSION}`),
-      envs
-    );
-    const ctr = baseCtr
-      .withSecretVariable("PULUMI_ACCESS_TOKEN", secret)
-      .withEnvVariable(
-        "GOOGLE_APPLICATION_CREDENTIALS",
-        GOOGLE_APPLICATION_CREDENTIALS || ""
-      )
-      .withMountedCache("/root/.pulumi", client.cacheVolume("pulumi-cache"))
-      .withMountedCache(
-        "/app/node_modules",
-        client.cacheVolume("pulumi-node-modules")
-      )
-      .withDirectory("/app", context, { exclude })
-      .withWorkdir("/app")
-      .withExec(["npm", "install"], { skipEntrypoint: true })
-      .withExec(["preview", "--non-interactive", "--stack", PULUMI_STACK]);
+  const baseCtr = withEnvs(
+    dag
+      .pipeline(Job.preview)
+      .container()
+      .from(`pulumi/pulumi:${PULUMI_VERSION}`),
+    envs
+  );
+  const ctr = baseCtr
+    .withSecretVariable("PULUMI_ACCESS_TOKEN", secret)
+    .withEnvVariable(
+      "GOOGLE_APPLICATION_CREDENTIALS",
+      GOOGLE_APPLICATION_CREDENTIALS || ""
+    )
+    .withMountedCache("/root/.pulumi", dag.cacheVolume("pulumi-cache"))
+    .withMountedCache(
+      "/app/node_modules",
+      dag.cacheVolume("pulumi-node-modules")
+    )
+    .withDirectory("/app", context, { exclude })
+    .withWorkdir("/app")
+    .withExec(["npm", "install"], { skipEntrypoint: true })
+    .withExec(["preview", "--non-interactive", "--stack", PULUMI_STACK]);
 
-    result = await ctr.stdout();
-  });
+  const result = await ctr.stdout();
   return result;
 }
 
@@ -100,47 +95,41 @@ export async function up(
   pulumiVersion = "latest",
   googleApplicationCredentials?: string
 ): Promise<string> {
-  let result = "";
   const GOOGLE_APPLICATION_CREDENTIALS =
     Deno.env.get("GOOGLE_APPLICATION_CREDENTIALS") ||
     googleApplicationCredentials;
   const PULUMI_STACK = Deno.env.get("PULUMI_STACK") || stack;
   const PULUMI_VERSION = Deno.env.get("PULUMI_VERSION") || pulumiVersion;
 
-  await connect(async (client: Client) => {
-    const context = getDirectory(client, src);
-    const secret = getPulumiAccessToken(client, token);
-    const baseCtr = withEnvs(
-      client
-        .pipeline(Job.up)
-        .container()
-        .from(`pulumi/pulumi:${PULUMI_VERSION}`),
-      envs
-    );
+  const context = await getDirectory(dag, src);
+  const secret = await getPulumiAccessToken(dag, token);
+  const baseCtr = withEnvs(
+    dag.pipeline(Job.up).container().from(`pulumi/pulumi:${PULUMI_VERSION}`),
+    envs
+  );
 
-    if (!secret) {
-      console.error("PULUMI_ACCESS_TOKEN env var is required");
-      Deno.exit(1);
-    }
+  if (!secret) {
+    console.error("PULUMI_ACCESS_TOKEN env var is required");
+    Deno.exit(1);
+  }
 
-    const ctr = baseCtr
-      .withSecretVariable("PULUMI_ACCESS_TOKEN", secret)
-      .withEnvVariable(
-        "GOOGLE_APPLICATION_CREDENTIALS",
-        GOOGLE_APPLICATION_CREDENTIALS || ""
-      )
-      .withMountedCache("/root/.pulumi", client.cacheVolume("pulumi-cache"))
-      .withMountedCache(
-        "/app/node_modules",
-        client.cacheVolume("pulumi-node-modules")
-      )
-      .withDirectory("/app", context, { exclude })
-      .withWorkdir("/app")
-      .withExec(["npm", "install"], { skipEntrypoint: true })
-      .withExec(["up", "--yes", "--non-interactive", "--stack", PULUMI_STACK]);
+  const ctr = baseCtr
+    .withSecretVariable("PULUMI_ACCESS_TOKEN", secret)
+    .withEnvVariable(
+      "GOOGLE_APPLICATION_CREDENTIALS",
+      GOOGLE_APPLICATION_CREDENTIALS || ""
+    )
+    .withMountedCache("/root/.pulumi", dag.cacheVolume("pulumi-cache"))
+    .withMountedCache(
+      "/app/node_modules",
+      dag.cacheVolume("pulumi-node-modules")
+    )
+    .withDirectory("/app", context, { exclude })
+    .withWorkdir("/app")
+    .withExec(["npm", "install"], { skipEntrypoint: true })
+    .withExec(["up", "--yes", "--non-interactive", "--stack", PULUMI_STACK]);
 
-    result = await ctr.stdout();
-  });
+  const result = await ctr.stdout();
   return result;
 }
 
