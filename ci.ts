@@ -1,7 +1,4 @@
-import {
-  preview,
-  up,
-} from "https://pkg.fluentci.io/pulumi_pipeline@v0.3.1/mod.ts";
+import { preview, up } from "jsr:@fluentci/pulumi";
 
 await preview();
 await up();

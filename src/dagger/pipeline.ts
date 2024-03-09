@@ -1,12 +1,9 @@
-import { uploadContext } from "../../deps.ts";
+import { env } from "../../deps.ts";
 import * as jobs from "./jobs.ts";
 
-const { preview, runnableJobs, exclude } = jobs;
+const { preview, runnableJobs } = jobs;
 
 export default async function pipeline(src = ".", args: string[] = []) {
-  if (Deno.env.has("FLUENTCI_SESSION_ID")) {
-    await uploadContext(src, exclude);
-  }
   if (args.length > 0) {
     await runSpecificJobs(args as jobs.Job[]);
     return;
@@ -14,8 +11,8 @@ export default async function pipeline(src = ".", args: string[] = []) {
 
   await preview(
     src,
-    Deno.env.get("PULUMI_STACK") || "dev",
-    Deno.env.get("PULUMI_ACCESS_TOKEN") || ""
+    env.get("PULUMI_STACK") || "dev",
+    env.get("PULUMI_ACCESS_TOKEN") || ""
   );
 }
 
@@ -27,8 +24,8 @@ async function runSpecificJobs(args: jobs.Job[]) {
     }
     await job(
       ".",
-      Deno.env.get("PULUMI_STACK") || "dev",
-      Deno.env.get("PULUMI_ACCESS_TOKEN") || ""
+      env.get("PULUMI_STACK") || "dev",
+      env.get("PULUMI_ACCESS_TOKEN") || ""
     );
   }
 }
