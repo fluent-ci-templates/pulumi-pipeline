@@ -10,21 +10,27 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: denoland/setup-deno@v1
-        with:
-          deno-version: v1.41
-      - name: Setup Fluent CI CLI
-        run: deno install -A -r https://cli.fluentci.io -n fluentci
-      - name: Setup Dagger
-        run: |
-          curl -L https://dl.dagger.io/dagger/install.sh | DAGGER_VERSION=0.10.0 sh
-          sudo mv bin/dagger /usr/local/bin
-          dagger version
       - name: Setup Service Account
-        run: echo $GCP_SERVICE_ACCOUNT > fluentci-086b644d4c53.json
+        run: |
+          echo $GCP_SERVICE_ACCOUNT > fluentci-086b644d4c53.json
         env:
           GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
         working-directory: example
+      - name: Setup Fluent CI CLI
+        uses: fluentci-io/setup-fluentci@v5
+        with:
+          wasm: true
+          plugin: bun
+          args: install
+          working-directory: example
+      - name: Run Wasm Plugin
+        run: |
+          fluentci run --wasm . preview --stack dev
+          fluentci run --wasm . up --stack dev
+        working-directory: example
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ./fluentci-086b644d4c53.json
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
       - name: Run Dagger Pipelines
         run: dagger run deno run -A ../src/dagger/runner.ts preview
         working-directory: example
